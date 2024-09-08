@@ -1,80 +1,63 @@
-import React, { Component } from 'react';
-import { nanoid } from 'nanoid';
-import ContactForm from './components/ContactForm/ContactForm.jsx';
-import ContactList from './components/ContactList/ContactList.jsx';
-import Filter from './components/Filter/Filter.jsx';
+// src/App.js
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import Searchbar from './components/Searchbar/Searchbar.jsx';
+import ImageGallery from './components/ImageGallery/ImageGallery.jsx';
+import Spinner from './components/Spinner/Spinner.jsx';
+import Button from './components/Button/Button.jsx';
+import Modal from './components/Modal/Modal.jsx'; // Import Modal
+import './styles.css';
 
-class App extends Component {
-  state = {
-    contacts: [],
-    filter: ''
-  };
+function App() {
+  const [images, setImages] = useState([]);
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [modalImage, setModalImage] = useState(null);
 
-  componentDidMount() {
-    const storedContacts = localStorage.getItem('contacts');
-    if (storedContacts) {
-      this.setState({ contacts: JSON.parse(storedContacts) });
-    }
-  }
+  useEffect(() => {
+    if (!query) return;
 
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.contacts !== this.state.contacts) {
-      localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
-    }
-  }
-
-  addContact = (name, number) => {
-    const duplicate = this.state.contacts.find(contact => contact.name === name);
-
-    if (duplicate) {
-      alert(`${name} is already in contacts.`);
-      return;
-    }
-
-    const contact = {
-      id: nanoid(),
-      name,
-      number
+    const fetchImages = async () => {
+      setLoading(true);
+      const API_KEY = '22910062-3497cb46ee95463a66c6aaf70'; // Replace with your API key
+      const response = await axios.get(
+        `https://pixabay.com/api/?q=${query}&page=${page}&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=12`
+      );
+      setImages((prevImages) => [...prevImages, ...response.data.hits]);
+      setLoading(false);
     };
 
-    this.setState(prevState => ({
-      contacts: [...prevState.contacts, contact]
-    }));
+    fetchImages();
+  }, [query, page]);
+
+  const handleSearchSubmit = (newQuery) => {
+    setQuery(newQuery);
+    setImages([]);
+    setPage(1);
   };
 
-  handleFilterChange = (filter) => {
-    this.setState({ filter });
+  const loadMore = () => {
+    setPage((prevPage) => prevPage + 1);
   };
 
-  deleteContact = (id) => {
-    this.setState(prevState => ({
-      contacts: prevState.contacts.filter(contact => contact.id !== id)
-    }));
+  const openModal = (imageURL) => {
+    setModalImage(imageURL);
   };
 
-  getFilteredContacts = () => {
-    const { contacts, filter } = this.state;
-    return contacts.filter(contact =>
-      contact.name.toLowerCase().includes(filter.toLowerCase())
-    );
+  const closeModal = () => {
+    setModalImage(null);
   };
 
-  render() {
-    const filteredContacts = this.getFilteredContacts();
-
-    return (
-      <div>
-        <h1>Phonebook</h1>
-        <ContactForm 
-          addContact={this.addContact} 
-        />
-
-        <h2>Contacts</h2>
-        <Filter filter={this.state.filter} onFilterChange={this.handleFilterChange} />
-        <ContactList contacts={filteredContacts} deleteContact={this.deleteContact} />
-      </div>
-    );
-  }
+  return (
+    <div className="App">
+      <Searchbar onSubmit={handleSearchSubmit} />
+      <ImageGallery images={images} onClick={openModal} /> {/* ImageGallery handles clicks */}
+      {loading && <Spinner />} {/* Use Spinner component */}
+      {images.length > 0 && !loading && <Button onClick={loadMore} />} {/* Load more button */}
+      {modalImage && <Modal largeImageURL={modalImage} onClose={closeModal} />} {/* Modal */}
+    </div>
+  );
 }
 
 export default App;
