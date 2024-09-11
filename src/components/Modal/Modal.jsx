@@ -1,6 +1,5 @@
-// src/components/Modal.jsx
 import React, { useEffect } from 'react';
-import './Modal.css'; // Assuming we separate modal-specific CSS
+import './Modal.css';
 
 function Modal({ largeImageURL, onClose }) {
   useEffect(() => {

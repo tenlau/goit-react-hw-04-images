@@ -1,11 +1,10 @@
-// src/App.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import Searchbar from './components/Searchbar/Searchbar.jsx';
 import ImageGallery from './components/ImageGallery/ImageGallery.jsx';
 import Spinner from './components/Spinner/Spinner.jsx';
 import Button from './components/Button/Button.jsx';
-import Modal from './components/Modal/Modal.jsx'; // Import Modal
+import Modal from './components/Modal/Modal.jsx';
 import './styles.css';
 
 function App() {
@@ -15,47 +14,52 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [modalImage, setModalImage] = useState(null);
 
-  useEffect(() => {
-    if (!query) return;
+  const API_KEY = '22910062-3497cb46ee95463a66c6aaf70'; // Replace with your API key
 
-    const fetchImages = async () => {
-      setLoading(true);
-      const API_KEY = '22910062-3497cb46ee95463a66c6aaf70'; // Replace with your API key
+  const fetchImages = useCallback(async () => {
+    if (!query) return;
+    setLoading(true);
+    try {
       const response = await axios.get(
         `https://pixabay.com/api/?q=${query}&page=${page}&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=12`
       );
       setImages((prevImages) => [...prevImages, ...response.data.hits]);
+    } catch (error) {
+      console.error("Error fetching images:", error);
+    } finally {
       setLoading(false);
-    };
-
-    fetchImages();
+    }
   }, [query, page]);
 
-  const handleSearchSubmit = (newQuery) => {
+  useEffect(() => {
+    fetchImages();
+  }, [fetchImages]);
+
+  const handleSearchSubmit = useCallback((newQuery) => {
     setQuery(newQuery);
     setImages([]);
     setPage(1);
-  };
+  }, []);
 
-  const loadMore = () => {
+  const loadMore = useCallback(() => {
     setPage((prevPage) => prevPage + 1);
-  };
+  }, []);
 
-  const openModal = (imageURL) => {
+  const openModal = useCallback((imageURL) => {
     setModalImage(imageURL);
-  };
+  }, []);
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setModalImage(null);
-  };
+  }, []);
 
   return (
     <div className="App">
       <Searchbar onSubmit={handleSearchSubmit} />
-      <ImageGallery images={images} onClick={openModal} /> {/* ImageGallery handles clicks */}
-      {loading && <Spinner />} {/* Use Spinner component */}
-      {images.length > 0 && !loading && <Button onClick={loadMore} />} {/* Load more button */}
-      {modalImage && <Modal largeImageURL={modalImage} onClose={closeModal} />} {/* Modal */}
+      <ImageGallery images={images} onClick={openModal} />
+      {loading && <Spinner />}
+      {images.length > 0 && !loading && <Button onClick={loadMore} />}
+      {modalImage && <Modal largeImageURL={modalImage} onClose={closeModal} />}
     </div>
   );
 }

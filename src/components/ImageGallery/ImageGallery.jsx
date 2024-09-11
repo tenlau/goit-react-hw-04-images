@@ -1,7 +1,5 @@
-// src/components/ImageGallery.jsx
 import React from 'react';
 import ImageGalleryItem from '../ImageGalleryItem/ImageGalleryItem.jsx';
-//import './ImageGallery.css'; // Optional: Separate styles if needed
 
 function ImageGallery({ images, onClick }) {
   return (
@@ -10,7 +8,7 @@ function ImageGallery({ images, onClick }) {
         <ImageGalleryItem
           key={image.id}
           image={image}
-          onClick={onClick} // Pass the onClick function to open the modal
+          onClick={onClick}
         />
       ))}
     </ul>
